@@ -1,0 +1,38 @@
+name: SonarCloud PR Analysis
+
+on:
+  pull_request:
+    branches: [main]  # or your default branch
+
+jobs:
+  sonarqube:
+    name: SonarCloud PR Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=configs-repo \
+            -Dsonar.host.url=https://sonarcloud.io/ \
+            -Dsonar.login=2ea8e5eab355b16d6f5987a4cdc25e1b5fd9b848 \
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
+            -Dsonar.pullrequest.branch=${{ github.head_ref }} \
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
